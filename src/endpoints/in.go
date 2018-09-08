@@ -1,14 +1,14 @@
 package endpoints
 
 import (
-	"net/http"
 	"../storage"
-	"utils"
+	"../utils"
+	"net/http"
 )
 
 type In struct {
-	Endpoint    string
-	Storage	    *storage.Storage
+	Endpoint string
+	Storage  *storage.Storage
 }
 
 func (ch In) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
@@ -18,7 +18,7 @@ func (ch In) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	gender := queryValues.Get("gender")
 	showroomId := utils.StrToInt(queryValues.Get("showroomId"))
 
-	ch.Storage.PersonInShowroom(showroomId, storage.Person{AgeIdentifier:age, Gender:gender})
+	ch.Storage.PersonInShowroom(showroomId, storage.Person{AgeIdentifier: age, Gender: gender})
 	writer.WriteHeader(http.StatusOK)
 }
 
