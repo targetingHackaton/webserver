@@ -8,6 +8,7 @@ import (
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"os"
 	"fmt"
+	"strconv"
 )
 
 const neo4jMaxConnections = 50
@@ -18,13 +19,20 @@ type HTTPHandler interface {
 }
 
 func main() {
-	var dataStorage = storage.Storage{}
+	var dataStorage storage.Storage
 
-	if len(os.Args) != 2 {
+	if len(os.Args) != 3 {
 		panic("Error")
 	}
 
-	var neo4jDsn = os.Args[1]
+	showroomsCount, err := strconv.Atoi(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
+
+	dataStorage = initiateStorage(showroomsCount)
+
+	var neo4jDsn = os.Args[2]
 	fmt.Println("Neo4jDsn: " + neo4jDsn)
 
 	forever := make(chan interface{}, 1)
@@ -53,4 +61,13 @@ func getHandlers(dataStorage *storage.Storage, neo4jDriverPool *bolt.DriverPool)
 		endpoints.Out{Endpoint: "/out", Storage: dataStorage},
 		endpoints.Camera{Endpoint: "/camera", Storage: dataStorage},
 	}
+}
+
+func initiateStorage(showroomsCount int) storage.Storage {
+	var dataStorage = storage.Storage{Showrooms: map[int]storage.Showroom{}}
+	for i := 0; i < showroomsCount; i++ {
+		dataStorage.Showrooms[i] = storage.Showroom{Cameras: map[int]storage.Person{}}
+	}
+
+	return dataStorage
 }

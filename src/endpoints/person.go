@@ -5,6 +5,7 @@ import (
 	"../storage"
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"../utils"
+	"fmt"
 )
 
 type Person struct {
@@ -34,14 +35,14 @@ func (ch Person) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 
 	cypherQuery = `
 		MATCH (c:Customer {gender:{gender}})-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
-		WHERE minAge <= c.age <= maxAge
+		WHERE {minAge} <= c.age <= {maxAge}
 		WITH c LIMIT 200
 			MATCH (c)-[:ORDERED]->(p:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
     		WHERE p.available = true AND p.sensible = false
     		WITH p.docId AS DOCID, count(c) AS freq
     		ORDER BY freq DESC
  		LIMIT 20
-    	RETURN DOCID, freq
+    	RETURN DOCID
 	`
 
 	cypherParams = map[string]interface{}{
@@ -51,6 +52,7 @@ func (ch Person) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
+	fmt.Println(data)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write(utils.GetErrorResponse())

@@ -1,6 +1,8 @@
 package storage
 
-import "math"
+import (
+	"math"
+)
 
 const Female = "F"
 const Male = "M"
@@ -60,7 +62,14 @@ func (storage Storage) GetRelevantAgeAndGender(showroomId int) (AgeInterval, str
 }
 
 func (storage Storage) GetPersonInFrontOfCamera(showroomId int, cameraId int) Person {
-	return storage.Showrooms[showroomId].Persons[cameraId]
+	showroom := storage.Showrooms[showroomId]
+	cameraPerson, ok := showroom.Cameras[cameraId]
+
+	if !ok {
+		return Person{}
+	}
+
+	return cameraPerson
 }
 
 func (showroom Showroom) personInFrontOfCamera(cameraId int, person Person) {
