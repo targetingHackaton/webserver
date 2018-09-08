@@ -1,23 +1,24 @@
 package endpoints
 
 import (
-	"net/http"
 	"../storage"
+	"../utils"
+	"net/http"
 )
 
 type Out struct {
-	Endpoint    string
-	Storage		*storage.Storage
+	Endpoint string
+	Storage  *storage.Storage
 }
 
 func (ch Out) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
-	//queryValues := req.URL.Query()
+	queryValues := req.URL.Query()
 
-	//age := utils.StrToInt(queryValues.Get("age"))
-	//gender := utils.StrToInt(queryValues.Get("gender"))
-	//showroomId := utils.StrToInt(queryValues.Get("showroomId"))
+	age := utils.StrToInt(queryValues.Get("age"))
+	gender := queryValues.Get("gender")
+	showroomId := utils.StrToInt(queryValues.Get("showroomId"))
 
-	//ch.Storage.PersonOutShowroom(showroomId, storage.Person{Age:age, Gender:gender})
+	ch.Storage.PersonOutShowroom(showroomId, storage.Person{AgeIdentifier: age, Gender: gender})
 	writer.WriteHeader(http.StatusOK)
 }
 
