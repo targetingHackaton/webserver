@@ -17,10 +17,10 @@ func init() {
 		{AgeMin: 0, AgeMax: 3},
 		{AgeMin: 4, AgeMax: 7},
 		{AgeMin: 8, AgeMax: 14},
-		{AgeMin: 15, AgeMax: 21},
-		{AgeMin: 22, AgeMax: 35},
-		{AgeMin: 36, AgeMax: 45},
-		{AgeMin: 46, AgeMax: 56},
+		{AgeMin: 15, AgeMax: 22},
+		{AgeMin: 23, AgeMax: 33},
+		{AgeMin: 34, AgeMax: 44},
+		{AgeMin: 45, AgeMax: 56},
 		{AgeMin: 57, AgeMax: 100},
 	}
 }

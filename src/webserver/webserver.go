@@ -59,7 +59,7 @@ func getHandlers(dataStorage *storage.Storage, neo4jDriverPool *bolt.DriverPool)
 		endpoints.Front{Endpoint: "/front", Storage: dataStorage, DriverPool: neo4jDriverPool},
 		endpoints.In{Endpoint: "/in", Storage: dataStorage},
 		endpoints.Out{Endpoint: "/out", Storage: dataStorage},
-		endpoints.Camera{Endpoint: "/camera", Storage: dataStorage},
+		endpoints.Camera{Endpoint: "/camera", Storage: dataStorage, DriverPool: neo4jDriverPool},
 	}
 }
 
