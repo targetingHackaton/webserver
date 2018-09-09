@@ -5,6 +5,7 @@ import (
 	"../storage"
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"../utils"
+	"fmt"
 )
 
 type All struct {
@@ -15,8 +16,11 @@ type All struct {
 
 func (ch All) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	var responseData []int64
-	//queryValues := req.URL.Query()
-	//showroomId := utils.StrToInt(queryValues.Get("showroomId"))
+	var cypherQuery string
+	var cypherParams map[string]interface{}
+
+	queryValues := req.URL.Query()
+	showroomId := utils.StrToInt(queryValues.Get("showroomId"))
 
 	neo4jConnection, err := (*ch.DriverPool).OpenPool()
 
@@ -27,16 +31,31 @@ func (ch All) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	}
 	defer neo4jConnection.Close()
 
-	//relevantAge, relevantGender := ch.Storage.GetRelevantAgeAndGender(showroomId)
+	relevantAge, relevantGender := ch.Storage.GetRelevantAgeAndGender(showroomId)
+	ageInterval := storage.AgeIntervals[relevantAge]
 
-	cypherQuery := `
-		MATCH (c:Customer)-[:ORDERED]->(:Product) WITH c LIMIT 1
-			MATCH (c)-[:ORDERED]->(rec:Product)
-    		RETURN rec.docId`
+	cypherQuery = `
+		MATCH (c:Customer {gender:{gender}})-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+		WHERE {minAge} <= c.age <= {maxAge}
+		WITH c LIMIT 200
+			MATCH (c)-[:ORDERED]->(p:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+    		WHERE p.available = true AND p.sensible = false
+    		WITH p.docId AS DOCID, count(c) AS freq
+    		ORDER BY freq DESC
+ 		LIMIT 20
+    	RETURN DOCID
+	`
 
-	cypherParams := map[string]interface{}{}
+	cypherParams = map[string]interface{}{
+		"gender": relevantGender,
+		"minAge": ageInterval.AgeMin,
+		"maxAge": ageInterval.AgeMax,
+	}
+
+	fmt.Println(cypherParams)
 
 	data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
+	fmt.Println(data)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write(utils.GetErrorResponse())
@@ -55,6 +74,8 @@ func (ch All) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 
 	writer.WriteHeader(http.StatusOK)
 	writer.Write(utils.GetSuccessResponse(responseData))
+
+	writer.WriteHeader(http.StatusOK)
 }
 
 func (ch All) GetEndpoint() string {

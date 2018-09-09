@@ -45,19 +45,20 @@ type Storage struct {
 }
 
 func (storage Storage) PersonInShowroom(showroomId int, person Person) {
-	storage.Showrooms[showroomId].personIn(person)
+	storage.Showrooms[showroomId] = storage.Showrooms[showroomId].personIn(person)
 }
 
 func (storage Storage) PersonOutShowroom(showroomId int, person Person) {
-	storage.Showrooms[showroomId].personOut(person)
+	storage.Showrooms[showroomId] = storage.Showrooms[showroomId].personOut(person)
 }
 
 func (storage Storage) PersonInFrontOfCamera(showroomId int, cameraId int, person Person) {
 	storage.Showrooms[showroomId].personInFrontOfCamera(cameraId, person)
 }
 
-func (storage Storage) GetRelevantAgeAndGender(showroomId int) (AgeInterval, string) {
+func (storage Storage) GetRelevantAgeAndGender(showroomId int) (int, string) {
 	var showroom = storage.Showrooms[showroomId]
+
 	return showroom.getRelevantAge(), showroom.getRelevantGender()
 }
 
@@ -76,37 +77,37 @@ func (showroom Showroom) personInFrontOfCamera(cameraId int, person Person) {
 	showroom.Cameras[cameraId] = person
 }
 
-func (showroom Showroom) personIn(person Person) {
-	showroom.Persons = append(showroom.Persons, person)
+func (showroom Showroom) personIn(person Person) Showroom{
+	showroom.Persons =  append(showroom.Persons, person)
+
+	return showroom
 }
 
-func (showroom Showroom) personOut(person Person) {
+func (showroom Showroom) personOut(person Person) Showroom{
+	OuterLoop:
 	for key, showroomPerson := range showroom.Persons {
 		if person.AgeIdentifier == showroomPerson.AgeIdentifier && person.Gender == showroomPerson.Gender {
 			showroom.Persons = append(showroom.Persons[:key], showroom.Persons[key+1:]...)
-			return
+			break OuterLoop
 		}
 	}
+
+	return showroom
 }
 
-func (showroom Showroom) getRelevantAge() AgeInterval {
-	var relevantInterval AgeInterval
-	var intervalsCount [AgeIntervalsNumber]int
+func (showroom Showroom) getRelevantAge() int {
+	var relevantInterval int
+	var intervalsCount = [AgeIntervalsNumber]int{}
 	var intervalMax = 0
 
 	for _, person := range showroom.Persons {
-		for key, ageInterval := range AgeIntervals {
-			if person.AgeIdentifier <= ageInterval.AgeMax && person.AgeIdentifier >= ageInterval.AgeMin {
-				intervalsCount[key]++
-				break
-			}
-		}
+		intervalsCount[person.AgeIdentifier]++
 	}
 
 	for key, count := range intervalsCount {
 		if count > intervalMax {
 			intervalMax = count
-			relevantInterval = AgeIntervals[key]
+			relevantInterval = key
 		}
 	}
 

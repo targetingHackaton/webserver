@@ -5,6 +5,7 @@ import (
 	"../storage"
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"utils"
+	"fmt"
 )
 
 type Front struct {
@@ -20,6 +21,8 @@ func (ch Front) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	gender := queryValues.Get("gender")
 	cameraId := utils.StrToInt(queryValues.Get("cameraId"))
 	showroomId := utils.StrToInt(queryValues.Get("showroomId"))
+
+	fmt.Println("muieeeee")
 
 	person := storage.Person{AgeIdentifier:age, Gender:gender}
 	ch.Storage.PersonInFrontOfCamera(showroomId, cameraId, person)
