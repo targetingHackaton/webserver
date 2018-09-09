@@ -13,8 +13,9 @@ type ShowroomCounter struct {
 }
 
 type RelevantAgeAndGender struct {
-	AgeInterval int    `json:"ageInterval"`
-	Gender      string `json:"gender"`
+	AgeInterval  int    `json:"ageInterval"`
+	Gender       string `json:"gender"`
+	TotalCounter int	`json:"totalCounter"`
 }
 
 func (ch ShowroomCounter) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
@@ -22,7 +23,8 @@ func (ch ShowroomCounter) ServeHTTP(writer http.ResponseWriter, req *http.Reques
 	showroomId := utils.StrToInt(queryValues.Get("showroomId"))
 
 	ageInterval, gender := ch.Storage.GetRelevantAgeAndGender(showroomId)
-	message, err := json.Marshal(RelevantAgeAndGender{AgeInterval: ageInterval, Gender: gender})
+	totalCounter := ch.Storage.GetPersonsCount(showroomId)
+	message, err := json.Marshal(RelevantAgeAndGender{AgeInterval: ageInterval, Gender: gender, TotalCounter: totalCounter})
 
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)

@@ -34,7 +34,7 @@ func (ch Person) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 
 	cypherQuery = `
 		MATCH (c:Customer {email:{email}})-[:ORDERED|VISITED]->(:Product)<-[:ORDERED]-(o:Customer)       		
-	WITH c, o LIMIT 500
+	WITH c, o LIMIT 1100
 		MATCH (o)-[:ORDERED]->(p:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
 		WHERE p.available = true AND p.sensible = false AND NOT (c)-[:ORDERED]->(p)
 		WITH p.docId AS DOCID, count(o) AS freq

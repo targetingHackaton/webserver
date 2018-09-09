@@ -23,7 +23,7 @@ func (ch Front) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	cameraId := utils.StrToInt(queryValues.Get("cameraId"))
 	showroomId := utils.StrToInt(queryValues.Get("showroomId"))
 
-	fmt.Println("E cineva in front de "+strconv.Itoa(age)+ " ani")
+	fmt.Println("E cineva in front cu varsta in segmentul "+ strconv.Itoa(age))
 
 	person := storage.Person{AgeIdentifier:age, Gender:gender}
 	ch.Storage.PersonInFrontOfCamera(showroomId, cameraId, person)

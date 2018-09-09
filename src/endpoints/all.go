@@ -38,25 +38,8 @@ func (ch All) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	relevantAge, relevantGender := ch.Storage.GetRelevantAgeAndGender(showroomId)
 
 	if relevantAge != -1 && relevantGender != "" {
-		ageInterval := storage.AgeIntervals[relevantAge]
-
-		cypherQuery = `
-		MATCH (c:Customer {gender:{gender}})-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
-		WHERE {minAge} <= c.age <= {maxAge}
-		WITH c LIMIT 200
-			MATCH (c)-[:ORDERED]->(p:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
-    		WHERE p.available = true AND p.sensible = false
-    		WITH p.docId AS DOCID, count(c) AS freq
-    		ORDER BY freq DESC
- 		LIMIT 20
-    	RETURN DOCID
-		`
-
-		cypherParams = map[string]interface{}{
-			"gender": relevantGender,
-			"minAge": ageInterval.AgeMin,
-			"maxAge": ageInterval.AgeMax,
-		}
+		cypherQuery = getCypherQuery(relevantAge, relevantGender)
+		cypherParams = getCypherParams(relevantAge, relevantGender)
 
 		data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
 
@@ -96,3 +79,83 @@ func (ch All) GetEndpoint() string {
 	return ch.Endpoint
 }
 
+func getCypherQuery(relevantAge int, relevantGender string) string {
+	if relevantAge < 2 && relevantGender == storage.UnknownGender {
+		return `
+		MATCH (c:Customer)-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+		WITH c LIMIT 1000
+			MATCH (c)-[:ORDERED]->(p:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+    		WHERE p.available = true AND p.sensible = false
+    		WITH p.docId AS DOCID, count(c) AS freq
+    		ORDER BY freq DESC
+ 		LIMIT 20
+    	RETURN DOCID
+		`
+	}
+
+	if relevantAge < 2 {
+		return `
+		MATCH (c:Customer {gender:{gender}})-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+		WITH c LIMIT 1000
+			MATCH (c)-[:ORDERED]->(p:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+    		WHERE p.available = true AND p.sensible = false
+    		WITH p.docId AS DOCID, count(c) AS freq
+    		ORDER BY freq DESC
+ 		LIMIT 20
+    	RETURN DOCID
+		`
+	}
+
+	if relevantGender == storage.UnknownGender {
+		return `
+		MATCH (c:Customer)-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+		WHERE {minAge} <= c.age <= {maxAge}
+		WITH c LIMIT 1000
+			MATCH (c)-[:ORDERED]->(p:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+    		WHERE p.available = true AND p.sensible = false
+    		WITH p.docId AS DOCID, count(c) AS freq
+    		ORDER BY freq DESC
+ 		LIMIT 20
+    	RETURN DOCID
+		`
+	}
+
+	return `
+		MATCH (c:Customer {gender:{gender}})-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+		WHERE {minAge} <= c.age <= {maxAge}
+		WITH c LIMIT 1000
+			MATCH (c)-[:ORDERED]->(p:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
+    		WHERE p.available = true AND p.sensible = false
+    		WITH p.docId AS DOCID, count(c) AS freq
+    		ORDER BY freq DESC
+ 		LIMIT 20
+    	RETURN DOCID
+		`
+}
+
+func getCypherParams(relevantAge int, relevantGender string) map[string]interface{} {
+	if relevantAge < 2 && relevantGender == storage.UnknownGender {
+		return map[string]interface{}{}
+	}
+
+	if relevantAge < 2 {
+		return map[string]interface{}{
+			"gender": relevantGender,
+		}
+	}
+
+	ageInterval := storage.AgeIntervals[relevantAge]
+
+	if relevantGender == storage.UnknownGender {
+		return map[string]interface{}{
+			"minAge": ageInterval.AgeMin,
+			"maxAge": ageInterval.AgeMax,
+		}
+	}
+
+	return map[string]interface{}{
+		"gender": relevantGender,
+		"minAge": ageInterval.AgeMin,
+		"maxAge": ageInterval.AgeMax,
+	}
+}
