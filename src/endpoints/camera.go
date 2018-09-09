@@ -9,7 +9,7 @@ import (
 	"math/rand"
 )
 
-const randomSkipLimit = 200
+const randomSkipLimit = 500
 
 type Camera struct {
 	Endpoint   string

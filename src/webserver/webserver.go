@@ -59,6 +59,7 @@ func getHandlers(dataStorage *storage.Storage, neo4jDriverPool *bolt.DriverPool)
 		endpoints.Out{Endpoint: "/out", Storage: dataStorage},
 		endpoints.Camera{Endpoint: "/camera", Storage: dataStorage, DriverPool: neo4jDriverPool},
 		endpoints.UpdatedCamera{Endpoint: "/cameraShouldRefresh", Storage: dataStorage},
+		endpoints.ShowroomCounter{Endpoint: "/getShowroomCounter", Storage: dataStorage},
 	}
 }
 

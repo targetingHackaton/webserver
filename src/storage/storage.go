@@ -49,6 +49,10 @@ type Storage struct {
 	Showrooms map[int]Showroom
 }
 
+func (storage Storage) GetPersonsCount(showroomId int) int {
+	return len(storage.Showrooms[showroomId].Persons)
+}
+
 func (storage Storage) PersonInShowroom(showroomId int, person Person) {
 	storage.Showrooms[showroomId] = storage.Showrooms[showroomId].personIn(person)
 }
