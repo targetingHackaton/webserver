@@ -18,6 +18,8 @@ func (ch Person) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	var responseData []int64
 	var cypherQuery string
 	var cypherParams map[string]interface{}
+	var rows [][]interface{}
+	var err error
 
 	queryValues := req.URL.Query()
 	email := queryValues.Get("email")
@@ -47,20 +49,22 @@ func (ch Person) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 
 	data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
 
-	if err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write(utils.GetErrorResponse())
-		return
-	}
-	rows, _, err := data.All()
-	if err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write(utils.GetErrorResponse())
-		return
+	if err == nil {
+		rows, _, err = data.All()
+		if err != nil {
+			rows = [][]interface{}{}
+		}
 	}
 
 	if len(rows) == 0 {
-		responseData = neo4j.GetFallbackScenario(neo4jConnection)
+		neo4jConnectionFallback, err := (*ch.DriverPool).OpenPool()
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			writer.Write(utils.GetErrorResponse())
+			return
+		}
+		defer neo4jConnection.Close()
+		responseData = neo4j.GetFallbackScenario(neo4jConnectionFallback)
 	} else {
 		for _, row := range rows {
 			responseData = append(responseData, (row[0]).(int64))

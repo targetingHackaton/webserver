@@ -70,7 +70,14 @@ func (ch Camera) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	if len(rows) == 0 {
-		responseData = neo4j.GetFallbackScenario(neo4jConnection)
+		neo4jConnectionFallback, err := (*ch.DriverPool).OpenPool()
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			writer.Write(utils.GetErrorResponse())
+			return
+		}
+		defer neo4jConnection.Close()
+		responseData = neo4j.GetFallbackScenario(neo4jConnectionFallback)
 	} else {
 		for _, row := range rows {
 			responseData = append(responseData, (row[0]).(int64))

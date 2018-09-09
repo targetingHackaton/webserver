@@ -29,7 +29,6 @@ func (ch Front) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	ch.Storage.PersonInFrontOfCamera(showroomId, cameraId, person)
 
 	writer.WriteHeader(http.StatusOK)
-	fmt.Println(ch.Storage)
 }
 
 func (ch Front) GetEndpoint() string {

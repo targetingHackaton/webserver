@@ -7,7 +7,6 @@ import (
 	"../neo4j"
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"os"
-	"fmt"
 	"strconv"
 )
 
@@ -33,7 +32,6 @@ func main() {
 	dataStorage = initiateStorage(showroomsCount)
 
 	var neo4jDsn = os.Args[2]
-	fmt.Println("Neo4jDsn: " + neo4jDsn)
 
 	forever := make(chan interface{}, 1)
 	neo4jDriverPool := neo4j.GetNeo4JDriverPool(neo4jDsn, neo4jMaxConnections)
