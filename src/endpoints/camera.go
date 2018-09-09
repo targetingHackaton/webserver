@@ -5,7 +5,6 @@ import (
 	"../storage"
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"../utils"
-	"fmt"
 )
 
 type Camera struct {
@@ -52,7 +51,7 @@ func (ch Camera) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
-	fmt.Println(data)
+
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write(utils.GetErrorResponse())

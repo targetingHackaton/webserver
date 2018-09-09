@@ -55,7 +55,7 @@ func (ch All) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	fmt.Println(cypherParams)
 
 	data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
-	fmt.Println(data)
+
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write(utils.GetErrorResponse())
