@@ -18,7 +18,7 @@ Targeting Hackathon api
 - /all
     - return recommendations based on people in the room (age and gender)
 - /person
-    - todo: return recommendations based on entered email (customer)
+    - return recommendations based on entered email (customer)
     - GET params: email
 - /camera
     - return recommendations based on who is in front of camera (age and gender)
