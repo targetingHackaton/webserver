@@ -1,6 +1,16 @@
 Targeting Hackathon api
 ============
 
+# Short information
+- This project is made in GoLang and is a webserver for 2 cases
+    - for the interface (GUI) made in Symfony, which gets recommendations from this webserver (product ids)
+    - for a RPI (Raspberry PI) that sends data in. ex:
+        - each time a customer enters a showroom, send it's data (age, gender)         
+        - each time a customer leaves a showroom, send it's data (age, gender)         
+        - each time a customer approaches a TV+Camera in a showroom, send it's data (age, gender)
+- The project uses neo4j for the Graph Database
+    - The database contains data and relations between customers, products, orders, etc         
+
 # Routes
 ## RPI (Raspberry PI) endpoints
 #### These endpoints are called by RPI and sends age interval + gender
