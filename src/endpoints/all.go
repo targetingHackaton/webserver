@@ -6,6 +6,7 @@ import (
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"../utils"
 	"fmt"
+	"../neo4j"
 )
 
 type All struct {
@@ -18,6 +19,8 @@ func (ch All) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	var responseData []int64
 	var cypherQuery string
 	var cypherParams map[string]interface{}
+	var rows [][]interface{}
+	var err error
 
 	queryValues := req.URL.Query()
 	showroomId := utils.StrToInt(queryValues.Get("showroomId"))
@@ -31,10 +34,14 @@ func (ch All) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	}
 	defer neo4jConnection.Close()
 
-	relevantAge, relevantGender := ch.Storage.GetRelevantAgeAndGender(showroomId)
-	ageInterval := storage.AgeIntervals[relevantAge]
+	//if storage.Showroom[showroomId]
 
-	cypherQuery = `
+	relevantAge, relevantGender := ch.Storage.GetRelevantAgeAndGender(showroomId)
+
+	if relevantAge != -1 && relevantGender != "" {
+		ageInterval := storage.AgeIntervals[relevantAge]
+
+		cypherQuery = `
 		MATCH (c:Customer {gender:{gender}})-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
 		WHERE {minAge} <= c.age <= {maxAge}
 		WITH c LIMIT 200
@@ -46,36 +53,39 @@ func (ch All) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
     	RETURN DOCID
 	`
 
-	cypherParams = map[string]interface{}{
-		"gender": relevantGender,
-		"minAge": ageInterval.AgeMin,
-		"maxAge": ageInterval.AgeMax,
+		cypherParams = map[string]interface{}{
+			"gender": relevantGender,
+			"minAge": ageInterval.AgeMin,
+			"maxAge": ageInterval.AgeMax,
+		}
+
+		fmt.Println(cypherParams)
+
+		data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
+
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			writer.Write(utils.GetErrorResponse())
+			return
+		}
+		rows, _, err = data.All()
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			writer.Write(utils.GetErrorResponse())
+			return
+		}
 	}
 
-	fmt.Println(cypherParams)
-
-	data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
-
-	if err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write(utils.GetErrorResponse())
-		return
-	}
-	rows, _, err := data.All()
-	if err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write(utils.GetErrorResponse())
-		return
-	}
-
-	for _, row := range rows {
-		responseData = append(responseData, (row[0]).(int64))
+	if len(rows) == 0 {
+		responseData = neo4j.GetFallbackScenario(neo4jConnection)
+	} else {
+		for _, row := range rows {
+			responseData = append(responseData, (row[0]).(int64))
+		}
 	}
 
 	writer.WriteHeader(http.StatusOK)
 	writer.Write(utils.GetSuccessResponse(responseData))
-
-	writer.WriteHeader(http.StatusOK)
 }
 
 func (ch All) GetEndpoint() string {

@@ -5,6 +5,7 @@ import (
 	"../storage"
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"utils"
+	"../neo4j"
 )
 
 type Person struct {
@@ -19,7 +20,6 @@ func (ch Person) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	var cypherParams map[string]interface{}
 
 	queryValues := req.URL.Query()
-	//showroomId := utils.StrToInt(queryValues.Get("showroomId"))
 	email := queryValues.Get("email")
 
 	neo4jConnection, err := (*ch.DriverPool).OpenPool()
@@ -59,15 +59,16 @@ func (ch Person) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	for _, row := range rows {
-		responseData = append(responseData, (row[0]).(int64))
+	if len(rows) == 0 {
+		responseData = neo4j.GetFallbackScenario(neo4jConnection)
+	} else {
+		for _, row := range rows {
+			responseData = append(responseData, (row[0]).(int64))
+		}
 	}
 
 	writer.WriteHeader(http.StatusOK)
 	writer.Write(utils.GetSuccessResponse(responseData))
-
-	writer.WriteHeader(http.StatusOK)
-
 }
 
 func (ch Person) GetEndpoint() string {

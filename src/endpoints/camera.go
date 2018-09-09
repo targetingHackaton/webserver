@@ -5,6 +5,7 @@ import (
 	"../storage"
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"../utils"
+	"../neo4j"
 )
 
 type Camera struct {
@@ -17,6 +18,8 @@ func (ch Camera) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	var responseData []int64
 	var cypherQuery string
 	var cypherParams map[string]interface{}
+	var rows [][]interface{}
+	var err error
 
 	queryValues := req.URL.Query()
 	showroomId := utils.StrToInt(queryValues.Get("showroomId"))
@@ -30,9 +33,10 @@ func (ch Camera) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	}
 	defer neo4jConnection.Close()
 
-	person := ch.Storage.GetPersonInFrontOfCamera(showroomId, cameraId)
+	person, isValid := ch.Storage.GetPersonInFrontOfCamera(showroomId, cameraId)
 
-	cypherQuery = `
+	if isValid {
+		cypherQuery = `
 		MATCH (c:Customer {gender:{gender}})-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
 		WHERE {minAge} <= c.age <= {maxAge}
 		WITH c LIMIT 200
@@ -44,34 +48,37 @@ func (ch Camera) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
     	RETURN DOCID
 	`
 
-	cypherParams = map[string]interface{}{
-		"gender": person.Gender,
-		"minAge": storage.AgeIntervals[person.AgeIdentifier].AgeMin,
-		"maxAge": storage.AgeIntervals[person.AgeIdentifier].AgeMax,
+		cypherParams = map[string]interface{}{
+			"gender": person.Gender,
+			"minAge": storage.AgeIntervals[person.AgeIdentifier].AgeMin,
+			"maxAge": storage.AgeIntervals[person.AgeIdentifier].AgeMax,
+		}
+
+		data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
+
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			writer.Write(utils.GetErrorResponse())
+			return
+		}
+		rows, _, err = data.All()
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			writer.Write(utils.GetErrorResponse())
+			return
+		}
 	}
 
-	data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)
-
-	if err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write(utils.GetErrorResponse())
-		return
-	}
-	rows, _, err := data.All()
-	if err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
-		writer.Write(utils.GetErrorResponse())
-		return
-	}
-
-	for _, row := range rows {
-		responseData = append(responseData, (row[0]).(int64))
+	if len(rows) == 0 {
+		responseData = neo4j.GetFallbackScenario(neo4jConnection)
+	} else {
+		for _, row := range rows {
+			responseData = append(responseData, (row[0]).(int64))
+		}
 	}
 
 	writer.WriteHeader(http.StatusOK)
 	writer.Write(utils.GetSuccessResponse(responseData))
-
-	writer.WriteHeader(http.StatusOK)
 }
 
 func (ch Camera) GetEndpoint() string {

@@ -60,13 +60,14 @@ func getHandlers(dataStorage *storage.Storage, neo4jDriverPool *bolt.DriverPool)
 		endpoints.In{Endpoint: "/in", Storage: dataStorage},
 		endpoints.Out{Endpoint: "/out", Storage: dataStorage},
 		endpoints.Camera{Endpoint: "/camera", Storage: dataStorage, DriverPool: neo4jDriverPool},
+		endpoints.UpdatedCamera{Endpoint: "/cameraShouldRefresh", Storage: dataStorage},
 	}
 }
 
 func initiateStorage(showroomsCount int) storage.Storage {
 	var dataStorage = storage.Storage{Showrooms: map[int]storage.Showroom{}}
 	for i := 0; i < showroomsCount; i++ {
-		dataStorage.Showrooms[i] = storage.Showroom{Cameras: map[int]storage.Person{}}
+		dataStorage.Showrooms[i] = storage.Showroom{Cameras: map[int]storage.CameraPerson{}}
 	}
 
 	return dataStorage

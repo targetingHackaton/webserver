@@ -4,6 +4,8 @@ import (
 	"../storage"
 	"../utils"
 	"net/http"
+	"fmt"
+	"strconv"
 )
 
 type Out struct {
@@ -18,6 +20,7 @@ func (ch Out) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 	gender := queryValues.Get("gender")
 	showroomId := utils.StrToInt(queryValues.Get("showroomId"))
 
+	fmt.Println("A iesit cineva de "+strconv.Itoa(age)+ " ani")
 	ch.Storage.PersonOutShowroom(showroomId, storage.Person{AgeIdentifier: age, Gender: gender})
 	writer.WriteHeader(http.StatusOK)
 }
