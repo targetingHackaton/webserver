@@ -6,7 +6,10 @@ import (
 	bolt "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"../utils"
 	"../neo4j"
+	"math/rand"
 )
+
+const randomSkipLimit = 200
 
 type Camera struct {
 	Endpoint   string
@@ -39,7 +42,7 @@ func (ch Camera) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 		cypherQuery = `
 		MATCH (c:Customer {gender:{gender}})-[:ORDERED]->(:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
 		WHERE {minAge} <= c.age <= {maxAge}
-		WITH c LIMIT 200
+		WITH c SKIP {randomSkip} LIMIT 500
 			MATCH (c)-[:ORDERED]->(p:Product)<-[:IS_MAIN_VENDOR]-(:Vendor{vendorId:1})
     		WHERE p.available = true AND p.sensible = false
     		WITH p.docId AS DOCID, count(c) AS freq
@@ -52,6 +55,7 @@ func (ch Camera) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
 			"gender": person.Gender,
 			"minAge": storage.AgeIntervals[person.AgeIdentifier].AgeMin,
 			"maxAge": storage.AgeIntervals[person.AgeIdentifier].AgeMax,
+			"randomSkip": rand.Intn(randomSkipLimit),
 		}
 
 		data, err := neo4jConnection.QueryNeo(cypherQuery, cypherParams)

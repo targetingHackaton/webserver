@@ -50,7 +50,7 @@ func (ch All) ServeHTTP(writer http.ResponseWriter, req *http.Request) {
     		ORDER BY freq DESC
  		LIMIT 20
     	RETURN DOCID
-	`
+		`
 
 		cypherParams = map[string]interface{}{
 			"gender": relevantGender,
